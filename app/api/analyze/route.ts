@@ -21,16 +21,36 @@ export async function POST(req: NextRequest) {
     if (files.length === 0) {
       return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
     }
-    // Analyze each file separately
+    // Get model selection
     const modelEntry = formData.get('model');
     const model = typeof modelEntry === 'string' ? modelEntry : 'openai/o4-mini';
-    const analyses = [] as Awaited<ReturnType<typeof analyzeDocument>>[];
-    for (let idx = 0; idx < files.length; idx++) {
-      const file = files[idx];
-      const buf = Buffer.from(await file.arrayBuffer());
-      const txt = await parseDocument(file.type, buf);
-      const result = await analyzeDocument(txt, model);
-      analyses.push(result);
+    // Collect file analyses
+    const analyses: Awaited<ReturnType<typeof analyzeDocument>>[] = [];
+    for (const item of files) {
+      const buf = Buffer.from(await item.arrayBuffer());
+      const txt = await parseDocument(item.type, buf);
+      analyses.push(await analyzeDocument(txt, model));
+    }
+    // Collect URL analyses (if any)
+    const urlEntries = formData.getAll('url');
+    for (const u of urlEntries) {
+      if (typeof u !== 'string') continue;
+      // fetch remote document
+      const resp = await fetch(u);
+      if (!resp.ok) continue;
+      const contentType = resp.headers.get('content-type') || '';
+      const buf = Buffer.from(await resp.arrayBuffer());
+      let txt: string;
+      if (contentType.includes('application/pdf') || u.toLowerCase().endsWith('.pdf')) {
+        txt = await parseDocument('application/pdf', buf);
+      } else {
+        // strip HTML tags
+        const html = buf.toString('utf-8');
+        txt = html.replace(/<script[\s\S]*?<\/script>/gi, '')
+                  .replace(/<style[\s\S]*?<\/style>/gi, '')
+                  .replace(/<[^>]+>/g, ' ');
+      }
+      analyses.push(await analyzeDocument(txt, model));
     }
     // Combine with file indicators
     // Topics

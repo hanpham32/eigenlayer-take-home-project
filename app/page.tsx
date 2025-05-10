@@ -50,6 +50,9 @@ export default function Home() {
     contexts: { sentence: string; section?: string }[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // URL sources
+  const [urlInput, setUrlInput] = useState<string>('');
+  const [urls, setUrls] = useState<string[]>([]);
   // Chat state
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'assistant'; text: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -68,13 +71,13 @@ export default function Home() {
     setAnalysis(null);
     try {
       const formData = new FormData();
-      // Append all selected files
-      files.forEach(file => formData.append("file", file));
-      formData.append("model", model);
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
+      // Append files
+      files.forEach(file => formData.append('file', file));
+      // Append URLs
+      urls.forEach(u => formData.append('url', u));
+      // Model selection
+      formData.append('model', model);
+      const res = await fetch('/api/analyze', { method: 'POST', body: formData });
       const payload = await res.json();
       if (!res.ok) {
         setError(payload.error || "Analysis failed");
@@ -110,21 +113,53 @@ export default function Home() {
           <option value="google/gemini-2.5-flash-preview">google/gemini-2.5-flash-preview</option>
         </select>
       </div>
-      {loading && <LoadingSpinner />}
       <FileUpload
-        multiple={true}
+        multiple
         accept=".pdf,.txt"
         onFilesSelected={handleFilesSelected}
-        onFileClick={(file) => setPreviewFile(file)}
+        onFileClick={file => setPreviewFile(file)}
       />
-      <button
-        onClick={handleAnalyze}
-        disabled={files.length === 0 || loading}
-        className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50
-    transition"
-      >
-        {loading ? "Analyzing..." : "Analyze Document"}
-      </button>
+      {/* URL input and list */}
+      <div className="mt-4 w-full max-w-xs mb-4">
+        <div className="flex space-x-2">
+          <input
+            type="url"
+            placeholder="Paste document URL"
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            className="flex-1 border rounded px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Button
+            onClick={() => {
+              if (!urlInput.trim()) return;
+              setUrls(prev => [...prev, urlInput.trim()]);
+              setUrlInput('');
+            }}
+            disabled={!urlInput.trim()}
+          >
+            Add
+          </Button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {urls.map((u, i) => (
+            <span key={i} className="inline-flex items-center bg-gray-200 text-gray-800 px-2 py-1 rounded text-sm">
+              <span className="truncate max-w-xs">{u}</span>
+              <button
+                className="ml-1 text-gray-500 hover:text-gray-700"
+                onClick={() => setUrls(prev => prev.filter((_, idx) => idx !== i))}
+              >×</button>
+            </span>
+          ))}
+        </div>
+        {/* Single analyze button for files + URLs */}
+        <Button
+          onClick={handleAnalyze}
+          disabled={(files.length + urls.length) === 0 || loading}
+          className="mt-4 w-full"
+        >
+          {loading ? <LoadingSpinner /> : 'Analyze Documents'}
+        </Button>
+      </div>
 
       {error && <p className="mt-2 text-red-500">{error}</p>}
 
@@ -188,7 +223,7 @@ export default function Home() {
       {/* Chatbox for Q&A */}
       {analysis && (
         <div className="mt-6 w-full max-w-2xl">
-          <h2 className="text-xl font-semibold mb-2 text-center">Chat about the uploaded documents</h2>
+          <h2 className="text-xl font-semibold mb-2 text-center">Chat about the shared documents</h2>
           <Card className="h-64 overflow-auto">
             {chatLoading ? (
               <div className="flex justify-center items-center h-full">
@@ -236,7 +271,7 @@ export default function Home() {
             <input
               type="text"
               className="flex-1 border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Type your question..."
+              placeholder="ask questions about the documents..."
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
             />
