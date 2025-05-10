@@ -30,7 +30,7 @@ export async function analyzeDocument(text: string): Promise<AnalysisResult> {
   - sections: title, start line, end line
   - citations: text & reference
 
-  Return a JSON object with keys: topics, entities, relationships, sections, citations.
+  Return ONLY a JSON object with keys: topics, entities, relationships, sections, citations.
 
 Document:
 """

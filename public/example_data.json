@@ -1,0 +1,262 @@
+{
+  "topics": [
+    "Peer-to-peer electronic cash",
+    "Double-spending problem",
+    "Proof-of-work",
+    "Blockchain and timestamping",
+    "Distributed consensus",
+    "Transaction structure and verification",
+    "Network protocol and message propagation",
+    "Mining incentives and block rewards",
+    "Merkle Tree and disk space pruning",
+    "Simplified payment verification (SPV)",
+    "Splitting and combining value in transactions",
+    "Privacy through pseudonymity",
+    "Probability of attack and network security",
+    "Cryptographic primitives (hashing, digital signatures)"
+  ],
+  "entities": [
+    {
+      "name": "Bitcoin",
+      "type": "protocol"
+    },
+    {
+      "name": "Hashcash",
+      "type": "algorithm"
+    },
+    {
+      "name": "SHA-256",
+      "type": "algorithm"
+    },
+    {
+      "name": "Merkle Tree",
+      "type": "data structure"
+    },
+    {
+      "name": "Timestamp Server",
+      "type": "service"
+    },
+    {
+      "name": "Peer-to-peer Network",
+      "type": "network"
+    },
+    {
+      "name": "Proof-of-Work",
+      "type": "consensus mechanism"
+    },
+    {
+      "name": "Satoshi Nakamoto",
+      "type": "actor (author)"
+    },
+    {
+      "name": "Node",
+      "type": "actor (network participant)"
+    },
+    {
+      "name": "Miner",
+      "type": "actor (block producer)"
+    },
+    {
+      "name": "Attacker",
+      "type": "actor (malicious node)"
+    },
+    {
+      "name": "Payee",
+      "type": "actor (transaction receiver)"
+    },
+    {
+      "name": "Payer/Owner",
+      "type": "actor (transaction sender)"
+    },
+    {
+      "name": "Transaction",
+      "type": "data structure"
+    },
+    {
+      "name": "Block",
+      "type": "data structure"
+    },
+    {
+      "name": "Coin",
+      "type": "concept (chain of signatures)"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "Node",
+      "target": "Transaction",
+      "type": "broadcasts"
+    },
+    {
+      "source": "Node",
+      "target": "Block",
+      "type": "validates and extends"
+    },
+    {
+      "source": "Miner",
+      "target": "Block",
+      "type": "creates (by Proof-of-Work)"
+    },
+    {
+      "source": "Proof-of-Work",
+      "target": "Blockchain",
+      "type": "secures"
+    },
+    {
+      "source": "Block",
+      "target": "Transaction",
+      "type": "includes"
+    },
+    {
+      "source": "Timestamp Server",
+      "target": "Block",
+      "type": "timestamps (chains)"
+    },
+    {
+      "source": "Merkle Tree",
+      "target": "Block",
+      "type": "organizes transactions"
+    },
+    {
+      "source": "Attacker",
+      "target": "Blockchain",
+      "type": "competes with honest chain"
+    },
+    {
+      "source": "Network",
+      "target": "Consensus",
+      "type": "achieves via longest chain"
+    },
+    {
+      "source": "Incentive (block reward)",
+      "target": "Miner",
+      "type": "rewards"
+    },
+    {
+      "source": "Disk pruning",
+      "target": "Merkle Tree",
+      "type": "uses for compacting old data"
+    },
+    {
+      "source": "Simplified Payment Verification",
+      "target": "Block headers",
+      "type": "relies on"
+    },
+    {
+      "source": "Privacy",
+      "target": "Public keys",
+      "type": "protects by anonymity"
+    }
+  ],
+  "sections": [
+    {
+      "title": "Abstract",
+      "start_line": 1,
+      "end_line": 12
+    },
+    {
+      "title": "1. Introduction",
+      "start_line": 13,
+      "end_line": 30
+    },
+    {
+      "title": "2. Transactions",
+      "start_line": 31,
+      "end_line": 47
+    },
+    {
+      "title": "3. Timestamp Server",
+      "start_line": 48,
+      "end_line": 61
+    },
+    {
+      "title": "4. Proof-of-Work",
+      "start_line": 62,
+      "end_line": 82
+    },
+    {
+      "title": "5. Network",
+      "start_line": 83,
+      "end_line": 98
+    },
+    {
+      "title": "6. Incentive",
+      "start_line": 99,
+      "end_line": 109
+    },
+    {
+      "title": "7. Reclaiming Disk Space",
+      "start_line": 110,
+      "end_line": 127
+    },
+    {
+      "title": "8. Simplified Payment Verification",
+      "start_line": 128,
+      "end_line": 143
+    },
+    {
+      "title": "9. Combining and Splitting Value",
+      "start_line": 144,
+      "end_line": 155
+    },
+    {
+      "title": "10. Privacy",
+      "start_line": 156,
+      "end_line": 170
+    },
+    {
+      "title": "11. Calculations",
+      "start_line": 171,
+      "end_line": 214
+    },
+    {
+      "title": "12. Conclusion",
+      "start_line": 215,
+      "end_line": 225
+    },
+    {
+      "title": "References",
+      "start_line": 226,
+      "end_line": 237
+    },
+    {
+      "title": "Bitcoin Glossary: 2018 Annual National Seminar US SENTENCING COMMISSION",
+      "start_line": 238,
+      "end_line": 350
+    }
+  ],
+  "citations": [
+    {
+      "reference": "[1]",
+      "text": "W. Dai, \"b-money,\" http://www.weidai.com/bmoney.txt, 1998."
+    },
+    {
+      "reference": "[2]",
+      "text": "H. Massias, X.S. Avila, and J.-J. Quisquater, \"Design of a secure timestamping service with minimal trust requirements,\" In 20th Symposium on Information Theory in the Benelux, May 1999."
+    },
+    {
+      "reference": "[3]",
+      "text": "S. Haber, W.S. Stornetta, \"How to time-stamp a digital document,\" In Journal of Cryptology, vol 3, no 2, pages 99-111, 1991."
+    },
+    {
+      "reference": "[4]",
+      "text": "D. Bayer, S. Haber, W.S. Stornetta, \"Improving the efficiency and reliability of digital time-stamping,\" In Sequences II: Methods in Communication, Security and Computer Science, pages 329-334, 1993."
+    },
+    {
+      "reference": "[5]",
+      "text": "S. Haber, W.S. Stornetta, \"Secure names for bit-strings,\" In Proceedings of the 4th ACM Conference on Computer and Communications Security, pages 28-35, April 1997."
+    },
+    {
+      "reference": "[6]",
+      "text": "A. Back, \"Hashcash - a denial of service counter-measure,\" http://www.hashcash.org/papers/hashcash.pdf, 2002."
+    },
+    {
+      "reference": "[7]",
+      "text": "R.C. Merkle, \"Protocols for public key cryptosystems,\" In Proc. 1980 Symposium on Security and Privacy, IEEE Computer Society, pages 122-133, April 1980."
+    },
+    {
+      "reference": "[8]",
+      "text": "W. Feller, \"An introduction to probability theory and its applications,\" 1957."
+    }
+  ]
+}

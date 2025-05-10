@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { FileUpload } from "@/components/file-upload";
+import NetworkGraph from "@/components/network-graph";
 
 type AnalysisResult = {
   topics: string[];
@@ -87,9 +88,7 @@ export default function Home() {
       {error && <p className="mt-2 text-red-500">{error}</p>}
 
       {analysis && (
-        <pre className="mt-4 w-full max-w-2xl p-4 bg-gray-100 rounded-md text-sm overflow-auto">
-          {JSON.stringify(analysis, null, 2)}
-        </pre>
+        <NetworkGraph jsonData={analysis} />
       )}
     </div>
   );
