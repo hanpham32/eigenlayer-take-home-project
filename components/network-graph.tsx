@@ -3,7 +3,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
-const NetworkGraph = ({jsonData}) => {
+/**
+ * jsonData: { entities, relationships }
+ * onEntityClick: callback when a node is clicked
+ */
+const NetworkGraph = ({jsonData, onEntityClick}) => {
   const svgRef = useRef(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,10 +121,13 @@ const NetworkGraph = ({jsonData}) => {
     const graph = svg.append("g");
     
     // Prepare the data for D3
+    // Include definition and contexts on each node
     const nodes = entities.map(entity => ({
       id: entity.name,
       name: entity.name,
       type: entity.type,
+      definition: entity.definition,
+      contexts: entity.contexts,
       radius: ["Bitcoin", "Proof-of-Work", "Blockchain"].includes(entity.name) ? 15 : 10
     }));
     
@@ -159,6 +166,10 @@ const NetworkGraph = ({jsonData}) => {
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended));
+    // on click, notify parent
+    node.on("click", (event, d) => {
+      if (onEntityClick) onEntityClick(d);
+    });
     
     // Add circles to nodes
     node.append("circle")

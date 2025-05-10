@@ -3,12 +3,18 @@ import { Buffer } from "buffer";
 /**
  * Structure of analysis result.
  */
+/**
+ * Structure of analysis result including definitions and contexts for each entity.
+ */
 export interface AnalysisResult {
   topics: string[];
-  entities: { name: string; type: string }[];
+  entities: {
+    name: string;
+    type: string;
+    definition: string;                     // AI-provided definition
+    contexts: { sentence: string; section?: string }[];  // Occurrences
+  }[];
   relationships: { source: string; target: string; type: string }[];
-  sections: { title: string; start: number; end: number }[];
-  citations: { text: string; reference?: string }[];
 }
 
 /**
@@ -16,21 +22,29 @@ export interface AnalysisResult {
  * @param text Plain text of the document
  * @returns Parsed AnalysisResult JSON
  */
-export async function analyzeDocument(text: string): Promise<AnalysisResult> {
+export async function analyzeDocument(text: string, model: string): Promise<AnalysisResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const apiUrl = process.env.OPENROUTER_API_BASE_URL || "https://openrouter.ai";
   if (!apiKey) {
     throw new Error("Missing OPENROUTER_API_KEY in environment");
   }
 
-  const prompt = `You are an AI assistant. Extract the following from the document:
-  - topics: key topics & concepts
-  - entities: protocols, algorithms, actors (name & type)
-  - relationships: source, target, type
-  - sections: title, start line, end line
-  - citations: text & reference
-
-  Return ONLY a JSON object with keys: topics, entities, relationships, sections, citations.
+  const prompt = `You are an AI assistant. Extract the following from the document and respond with valid JSON only (no explanatory text, markdown, or code fences):
+{
+  "topics": [ ... ],
+  "entities": [
+    {
+      "name": "...",
+      "type": "...",
+      "definition": "a concise description",
+      "contexts": [
+        { "sentence": "...", "section": "Section Title" },
+        ...
+      ]
+    }
+  ],
+  "relationships": [ { "source": "...", "target": "...", "type": "..." } ]
+}
 
 Document:
 """
@@ -45,7 +59,7 @@ ${text}
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "openai/o4-mini",
+      model: model,
       messages: [
         { role: "system", content: "You are a helpful assistant." },
         { role: "user", content: prompt },
@@ -67,11 +81,15 @@ ${text}
   } else {
     console.error("No choices found in response");
   }
-  let result;
+  // Sanitize response: extract first JSON object substring
+  let result: AnalysisResult;
   try {
-    result = JSON.parse(content);
+    const raw = content?.trim() || '';
+    const matched = raw.match(/\{[\s\S]*\}$/);
+    const jsonText = matched ? matched[0] : raw;
+    result = JSON.parse(jsonText);
   } catch (err: any) {
-    throw new Error("Failed to parse JSON from AI response: " + err.message);
+    throw new Error("Failed to parse JSON from AI response: " + err.message + ". Response was: " + content);
   }
   return result;
 }
