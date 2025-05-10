@@ -373,11 +373,11 @@ const NetworkGraph = ({jsonData, onEntityClick}) => {
         <svg ref={svgRef} className="w-full h-full"></svg>
       </div>
       <div className="mt-4 text-gray-600 text-sm">
-        <p>Visualization of entities and relationships from Satoshi Nakamoto's Bitcoin whitepaper.</p>
         <ul className="list-disc ml-5 mt-2">
           <li>Drag nodes to rearrange the network</li>
           <li>Scroll to zoom in/out</li>
           <li>Hover over nodes to highlight connections</li>
+          <li>Click on a node to see its definition</li>
           <li>Click 'Reset View' to restore the original view</li>
         </ul>
       </div>

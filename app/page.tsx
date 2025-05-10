@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { FileUpload } from "@/components/file-upload";
 import NetworkGraph from "@/components/network-graph";
 
@@ -38,7 +40,7 @@ export default function Home() {
       setPreviewText('');
     }
   }, [previewFile]);
-  const [filter, setFilter] = useState<'all'|'uniqueA'|'uniqueB'|'shared'|'security'>('all');
+  // removed filtering feature
   // Selected entity for details panel
   const [selectedEntity, setSelectedEntity] = useState<{
     id: string;
@@ -48,6 +50,10 @@ export default function Home() {
     contexts: { sentence: string; section?: string }[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'assistant'; text: string }[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatInput, setChatInput] = useState<string>('');
 
   const handleFilesSelected = (selected: File[]) => {
     setFiles(selected);
@@ -73,7 +79,10 @@ export default function Home() {
       if (!res.ok) {
         setError(payload.error || "Analysis failed");
       } else {
-      setAnalysis(payload as AnalysisResult);
+        setAnalysis(payload as AnalysisResult);
+        // reset chat
+        setChatMessages([]);
+        setChatInput('');
       }
     } catch (e: any) {
       setError(e.message);
@@ -84,7 +93,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h1 className="text-3xl font-semibold mb-4">Whitepaper Visualizer</h1>
+      <h1 className="text-3xl font-semibold mb-4">Whitepaper Interactive Visualizer</h1>
       <div className="w-full max-w-xs mb-4">
         <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
           Select AI Model
@@ -119,47 +128,13 @@ export default function Home() {
 
       {error && <p className="mt-2 text-red-500">{error}</p>}
 
-      {/* Filter controls */}
-      {analysis && (
-        <div className="mt-4 flex space-x-2">
-          <label className="text-sm font-medium">Filter:</label>
-          <select
-            value={filter}
-            onChange={e => setFilter(e.target.value as any)}
-            className="rounded border px-2 py-1 text-sm"
-          >
-            <option value="all">All</option>
-            <option value="uniqueA">Unique to Paper A</option>
-            <option value="uniqueB">Unique to Paper B</option>
-            <option value="shared">Only Shared</option>
-            <option value="security">Security Concepts</option>
-          </select>
-        </div>
-      )}
 
-      {analysis && (() => {
-        // Apply filter
-        let ents = analysis.entities;
-        let rels = analysis.relationships;
-        if (filter === 'uniqueA') {
-          ents = ents.filter(e => e.files.length === 1 && e.files[0] === 0);
-          rels = rels.filter(r => r.files.length === 1 && r.files[0] === 0);
-        } else if (filter === 'uniqueB') {
-          ents = ents.filter(e => e.files.length === 1 && e.files[0] === 1);
-          rels = rels.filter(r => r.files.length === 1 && r.files[0] === 1);
-        } else if (filter === 'shared') {
-          ents = ents.filter(e => e.files.length > 1);
-          rels = rels.filter(r => r.files.length > 1);
-        } else if (filter === 'security') {
-          const secNames = ents
-            .filter(e => e.name.toLowerCase().includes('security') || e.type.toLowerCase().includes('security'))
-            .map(e => e.name);
-          ents = ents.filter(e => secNames.includes(e.name));
-          rels = rels.filter(r => secNames.includes(r.source) || secNames.includes(r.target));
-        }
-        const view = { entities: ents, relationships: rels } as any;
-        return <NetworkGraph jsonData={view} onEntityClick={setSelectedEntity} />;
-      })()}
+      {analysis && (
+        <NetworkGraph
+          jsonData={{ entities: analysis.entities, relationships: analysis.relationships }}
+          onEntityClick={setSelectedEntity}
+        />
+      )}
       {/* Entity details panel */}
       {selectedEntity && (
         <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-xl p-4 overflow-auto z-50">
@@ -208,6 +183,65 @@ export default function Home() {
             className="mt-2 text-sm text-blue-600 hover:underline"
             onClick={() => setPreviewFile(null)}
           >Close Preview</button>
+        </div>
+      )}
+      {/* Chatbox for Q&A */}
+      {analysis && (
+        <div className="mt-6 w-full max-w-2xl">
+          <h2 className="text-xl font-semibold mb-2 text-center">Chat about the uploaded documents</h2>
+          <Card className="h-64 overflow-auto">
+            {chatLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              chatMessages.map((m, i) => (
+                <div key={i} className={m.sender === 'user' ? 'text-right mb-1' : 'text-left mb-1'}>
+                  <span className={
+                    m.sender === 'user'
+                      ? 'inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded'
+                      : 'inline-block bg-gray-100 text-gray-800 px-2 py-1 rounded'
+                  }>
+                    {m.text}
+                  </span>
+                </div>
+              ))
+            )}
+          </Card>
+          <form
+            className="mt-2 flex space-x-2"
+            onSubmit={async e => {
+              e.preventDefault();
+              if (!chatInput.trim()) return;
+              setChatMessages(prev => [...prev, { sender: 'user', text: chatInput }]);
+              const q = chatInput;
+              setChatInput('');
+              setChatLoading(true);
+              try {
+                const res = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ question: q, analysis }),
+                });
+                const data = await res.json();
+                const reply = data.answer || data.error || 'No response';
+                setChatMessages(prev => [...prev, { sender: 'assistant', text: reply }]);
+              } catch (err: any) {
+                setChatMessages(prev => [...prev, { sender: 'assistant', text: 'Error: ' + err.message }]);
+              } finally {
+                setChatLoading(false);
+              }
+            }}
+          >
+            <input
+              type="text"
+              className="flex-1 border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Type your question..."
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+            />
+            <Button type="submit">Send</Button>
+          </form>
         </div>
       )}
     </div>
