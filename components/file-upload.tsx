@@ -8,13 +8,20 @@ interface FileUploadProps {
   accept?: string;
   /** Callback when files are selected */
   onFilesSelected?: (files: File[]) => void;
+  /** Callback when a file in the list is clicked */
+  onFileClick?: (file: File) => void;
 }
 
 /**
  * FileUpload component allows users to drag & drop or click to select files.
  * Displays a list of selected files.
  */
-export const FileUpload: React.FC<FileUploadProps> = ({ multiple = false, accept, onFilesSelected }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({
+  multiple = false,
+  accept,
+  onFilesSelected,
+  onFileClick = () => {},
+}) => {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -63,9 +70,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ multiple = false, accept
           {files.map((file, index) => (
             <li
               key={index}
-              className="flex justify-between items-center bg-gray-50 p-2 rounded-md"
+              className="flex justify-between items-center bg-gray-50 p-2 rounded-md cursor-pointer hover:bg-gray-100"
+              onClick={() => onFileClick(file)}
             >
-              <span className="text-sm text-gray-700">{file.name}</span>
+              <span className="text-sm text-gray-700 underline">{file.name}</span>
               <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</span>
             </li>
           ))}

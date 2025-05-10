@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { FileUpload } from "@/components/file-upload";
 import NetworkGraph from "@/components/network-graph";
@@ -23,6 +23,21 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState<string>('openai/o4-mini');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  // Preview selected uploaded file
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewText, setPreviewText] = useState<string>('');
+  // Load text preview when a non-PDF file is selected
+  useEffect(() => {
+    if (previewFile && previewFile.type !== 'application/pdf') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewText(reader.result as string);
+      };
+      reader.readAsText(previewFile, 'utf-8');
+    } else {
+      setPreviewText('');
+    }
+  }, [previewFile]);
   const [filter, setFilter] = useState<'all'|'uniqueA'|'uniqueB'|'shared'|'security'>('all');
   // Selected entity for details panel
   const [selectedEntity, setSelectedEntity] = useState<{
@@ -91,6 +106,7 @@ export default function Home() {
         multiple={true}
         accept=".pdf,.txt"
         onFilesSelected={handleFilesSelected}
+        onFileClick={(file) => setPreviewFile(file)}
       />
       <button
         onClick={handleAnalyze}
@@ -168,6 +184,30 @@ export default function Home() {
           ) : (
             <p className="text-sm text-gray-500">No context sentences available.</p>
           )}
+        </div>
+      )}
+
+      {/* Preview panel for uploaded document */}
+      {previewFile && (
+        <div className="mt-6 w-full max-w-4xl border rounded p-4 mx-auto">
+          <h2 className="text-lg font-medium mb-2">Preview: {previewFile.name}</h2>
+          {previewFile.type === 'application/pdf' ? (
+            <iframe
+              src={URL.createObjectURL(previewFile)}
+              className="w-full h-[80vh]"
+              title="PDF Preview"
+            />
+          ) : (
+            <div className="w-full h-[80vh] overflow-auto bg-gray-50 p-2">
+              <pre className="whitespace-pre-wrap text-sm">
+                {previewText}
+              </pre>
+            </div>
+          )}
+          <button
+            className="mt-2 text-sm text-blue-600 hover:underline"
+            onClick={() => setPreviewFile(null)}
+          >Close Preview</button>
         </div>
       )}
     </div>
